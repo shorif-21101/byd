@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+      <link rel="stylesheet" href="css/components.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+ <meta name="theme-color" content="#121214">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>BYD</title>
+  <link rel="stylesheet" href="css/theme.css">
+  <link rel="stylesheet" href="css/layout.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/theme.css">
+  <link rel="stylesheet" href="css/layout.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/design.css">
+</head>
+<body>
+
+  <!-- ===== ANIMATED BACKGROUND ===== -->
+  <div class="bg">
+    <span class="blob b1"></span>
+    <span class="blob b2"></span>
+    <span class="blob b3"></span>
+  </div>
+
+  <div class="app">
+
+       <nav class="nav glass" id="nav">
+      <div class="brand">B<b>Y</b>D</div>
+
+      <button class="nav-btn active" data-page="workout">
+        <span class="led"></span>
+        <svg class="nav-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.4 14.4 9.6 9.6"/><path d="M18.657 21.485a2 2 0 1 1-2.829-2.828l-1.767 1.768a2 2 0 1 1-2.829-2.829l6.364-6.364a2 2 0 1 1 2.829 2.829l-1.768 1.767a2 2 0 1 1 2.828 2.829z"/><path d="m21.5 21.5-1.4-1.4"/><path d="M3.9 3.9 2.5 2.5"/><path d="M6.404 12.768a2 2 0 1 1-2.829-2.829l1.768-1.767a2 2 0 1 1-2.828-2.829l2.828-2.828a2 2 0 1 1 2.829 2.828l1.767-1.768a2 2 0 1 1 2.829 2.829z"/></svg>
+        <span class="lbl">Workout</span>
+      </button>
+
+      <button class="nav-btn" data-page="presets">
+        <span class="led"></span>
+        <svg class="nav-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"/><path d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"/><path d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"/></svg>
+        <span class="lbl">Presets</span>
+      </button>
+
+      <button class="nav-btn" data-page="progress">
+        <span class="led"></span>
+        <svg class="nav-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v16a2 2 0 0 0 2 2h16"/><path d="m19 9-5 5-4-4-3 3"/></svg>
+        <span class="lbl">Progress</span>
+      </button>
+
+            <button class="nav-btn" data-page="datalog">
+        <span class="led"></span>
+        <svg class="nav-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l4 2"/></svg>
+        <span class="lbl">Data Log</span>
+      </button>
+
+      <button class="nav-btn" data-page="activity">
+        <span class="led"></span>
+        <svg class="nav-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/><path d="M8 14h.01"/><path d="M12 14h.01"/><path d="M16 14h.01"/><path d="M8 18h.01"/><path d="M12 18h.01"/><path d="M16 18h.01"/></svg>
+        <span class="lbl">Activity</span>
+      </button>
+
+
+      <!-- NEW PAGE BUTTONS GO HERE LATER -->
+
+      <div class="side-session" id="side-session"></div>
+    </nav>
+
+    <!-- ===== PAGES ===== -->
+    <main class="stage">
+
+            <!-- PAGE 1: WORKOUT -->
+      <section class="page active" id="page-workout">
+                <header class="page-head"><div class="eyebrow">Today's session</div><h1>Work<span>out</span></h1></header>
+        <div id="workout-root"></div>
+      </section>
+
+           <!-- PAGE 2: PRESETS -->
+      <section class="page" id="page-presets">
+               <header class="page-head"><div class="eyebrow">Build your days</div><h1>Pre<span>sets</span></h1></header>
+
+        <div class="card glass new-preset">
+          <input class="input" id="preset-name" placeholder="New preset name (e.g. Chest)" maxlength="50">
+          <button class="btn primary" id="preset-create">Create</button>
+        </div>
+
+        <div id="presets-root"></div>
+      </section>
+
+        <!-- PAGE 3: PROGRESS -->
+      <section class="page" id="page-progress">
+                <header class="page-head"><div class="eyebrow">Overload tracker</div><h1>Prog<span>ress</span></h1></header>
+        <div id="progress-root"></div>
+      </section>
+
+
+
+            <!-- PAGE 4: DATA LOG -->
+      <section class="page" id="page-datalog">
+        <header class="page-head"><div class="eyebrow">Saved sessions</div><h1>Data <span>Log</span></h1></header>
+        <div id="datalog-root"></div>
+      </section>
+
+
+            <!-- PAGE 5: ACTIVITY -->
+      <section class="page" id="page-activity">
+        <header class="page-head"><div class="eyebrow">Gym calendar</div><h1>Acti<span>vity</span></h1></header>
+        <div id="activity-root"></div>
+      </section>
+
+      <!-- NEW PAGES GO HERE LATER -->
+
+    </main>
+  </div>
+
+
+   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/config.js"></script>
+  <script src="js/storage.js"></script>
+  <script src="js/sfx.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/pages/presets.js"></script>
+  <script src="js/pages/workout.js"></script>
+  <script src="js/pages/progress.js"></script>
+  <script src="js/pages/datalog.js"></script>
+  <script src="js/pages/activity.js"></script>
+  <script src="js/app.js"></script>
+  <script src="js/sync.js"></script>
+
+
+
+
+
+
+
+
+
+</body>
+</html>

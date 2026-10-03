@@ -1,0 +1,75 @@
+/* ===== COLOURS & VARIABLES ===== */
+:root {
+  --bg: #121519;
+    --text: #e6e9ee;
+  --text-dim: #7f8794;
+
+  --glass-top: rgba(36, 41, 50, 0.62);        /* dark liquid glass */
+  --glass-bottom: rgba(10, 12, 16, 0.78);
+  --glass-border: rgba(255, 255, 255, 0.09);
+  --radius: 22px;
+
+  --good: #7dff6b;                            /* reserved for progress graph later */
+  --bad: #ff4d5e;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+html, body { height: 100%; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif;
+  overflow: hidden;
+}
+
+h1 { font-size: 1.8rem; font-weight: 800; margin-bottom: 18px; letter-spacing: -0.5px; }
+
+/* ===== GLASS EFFECT (reuse by adding class="glass") ===== */
+.glass {
+  background:
+    radial-gradient(120% 90% at 0% 0%, rgba(255, 255, 255, 0.07), transparent 55%),   /* liquid sheen */
+    linear-gradient(145deg, var(--glass-top), var(--glass-bottom));
+  border: 1px solid var(--glass-border);
+  backdrop-filter: blur(30px) saturate(130%);
+  -webkit-backdrop-filter: blur(30px) saturate(130%);
+  box-shadow:
+    0 14px 40px rgba(0, 0, 0, 0.55),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    inset 0 -12px 24px rgba(0, 0, 0, 0.25);                                          /* inner depth */
+}
+
+.card { border-radius: var(--radius); padding: 22px; transition: border-color 0.3s ease; }
+.card:hover { border-color: rgba(255, 255, 255, 0.18); }
+
+/* ===== LIVING BACKGROUND (greys only) ===== */
+.bg { position: fixed; inset: 0; z-index: -1; overflow: hidden; }
+
+.bg::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(200, 210, 225, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(200, 210, 225, 0.05) 1px, transparent 1px);
+  background-size: 44px 44px;
+  mask-image: radial-gradient(ellipse at center, #000 30%, transparent 80%);
+  -webkit-mask-image: radial-gradient(ellipse at center, #000 30%, transparent 80%);
+}
+
+.blob {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(90px);
+  opacity: 0.4;
+  animation: float 18s ease-in-out infinite alternate;
+}
+.b1 { width: 440px; height: 440px; background: #6b7584; top: -120px; left: -90px; }
+.b2 { width: 400px; height: 400px; background: #454d59; bottom: -130px; right: -70px; animation-delay: -6s; }
+.b3 { width: 280px; height: 280px; background: #8a929e; top: 50%; left: 58%; opacity: 0.2; animation-delay: -12s; }
+
+@keyframes float {
+  from { transform: translate(0, 0) scale(1); }
+  to   { transform: translate(60px, 80px) scale(1.2); }
+}
