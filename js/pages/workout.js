@@ -502,7 +502,14 @@
     if (action === 'x-close') { closeEx(); return; }
 
     if (action === 'add-set') {
-      getSets(id).push({ reps: '', kg: '', done: false });
+            const cur = getSets(id);
+      const prev = cur[cur.length - 1];
+      cur.push({
+        reps: prev ? prev.reps : '',
+        kg: prev ? prev.kg : '',
+        done: false,
+        auto: { reps: !!(prev && prev.reps !== ''), kg: !!(prev && prev.kg !== '') }
+      });
       state.exDone[id] = false;
       sfx('add');
       renderExModal();
@@ -580,11 +587,30 @@
     let typeTimer = null;
   function flushSave() { if (typeTimer) { clearTimeout(typeTimer); typeTimer = null; save(); } }
 
-  exOverlay.addEventListener('input', e => {
+    exOverlay.addEventListener('input', e => {
     const field = e.target.dataset.field;
     if (!field || !openEx) return;
     const row = e.target.closest('.set-row');
-    getSets(openEx)[Number(row.dataset.set)][field] = e.target.value;
+    const sets = getSets(openEx);
+    const i = Number(row.dataset.set);
+    const value = e.target.value;
+
+    sets[i][field] = value;
+    sets[i].auto = sets[i].auto || {};
+    sets[i].auto[field] = false;                     // you typed this one yourself
+
+    // pass the value down to the sets below, until one was set by hand or is already ticked
+    for (let j = i + 1; j < sets.length; j++) {
+      const n = sets[j];
+      n.auto = n.auto || {};
+      if (n.done) break;
+      if (n[field] !== '' && !n.auto[field]) break;
+      n[field] = value;
+      n.auto[field] = value !== '';
+      const box = exOverlay.querySelector('.set-row[data-set="' + j + '"] [data-field="' + field + '"]');
+      if (box) box.value = value;
+    }
+
     clearTimeout(typeTimer);
     typeTimer = setTimeout(flushSave, 400);          // save once you pause typing, not on every key
   });
