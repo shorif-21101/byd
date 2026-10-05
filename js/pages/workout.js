@@ -567,9 +567,6 @@
         return;
       }
 
-      s.done = !s.done;
-      row.classList.toggle('done', s.done);
-      btn.classList.toggle('on', s.done);
             s.done = !s.done;
       row.classList.toggle('done', s.done);
       btn.classList.toggle('on', s.done);
@@ -591,19 +588,19 @@
     // copy this set's reps/kg into the sets below that you haven't touched yet
   function carryDown(i) {
     const sets = getSets(openEx);
+    const j = i + 1;
+    if (j >= sets.length) return;               // last set: nothing below to fill
+    const n = sets[j];
+    if (n.done) return;                         // never touch a set that is already ticked
+    n.auto = n.auto || {};
     ['reps', 'kg'].forEach(field => {
       const value = sets[i][field];
       if (value === '' || value === undefined) return;
-      for (let j = i + 1; j < sets.length; j++) {
-        const n = sets[j];
-        n.auto = n.auto || {};
-        if (n.done) break;
-        if (n[field] !== '' && !n.auto[field]) break;
-        n[field] = value;
-        n.auto[field] = true;
-        const box = exOverlay.querySelector('.set-row[data-set="' + j + '"] [data-field="' + field + '"]');
-        if (box) box.value = value;
-      }
+      if (n[field] !== '' && !n.auto[field]) return;   // you typed this one yourself: keep it
+      n[field] = value;
+      n.auto[field] = true;
+      const box = exOverlay.querySelector('.set-row[data-set="' + j + '"] [data-field="' + field + '"]');
+      if (box) box.value = value;
     });
   }
     let typeTimer = null;
@@ -615,23 +612,10 @@
     const row = e.target.closest('.set-row');
     const sets = getSets(openEx);
     const i = Number(row.dataset.set);
-    const value = e.target.value;
 
-    sets[i][field] = value;
+    sets[i][field] = e.target.value;
     sets[i].auto = sets[i].auto || {};
     sets[i].auto[field] = false;                     // you typed this one yourself
-
-    // pass the value down to the sets below, until one was set by hand or is already ticked
-    for (let j = i + 1; j < sets.length; j++) {
-      const n = sets[j];
-      n.auto = n.auto || {};
-      if (n.done) break;
-      if (n[field] !== '' && !n.auto[field]) break;
-      n[field] = value;
-      n.auto[field] = value !== '';
-      const box = exOverlay.querySelector('.set-row[data-set="' + j + '"] [data-field="' + field + '"]');
-      if (box) box.value = value;
-    }
 
     clearTimeout(typeTimer);
     typeTimer = setTimeout(flushSave, 400);          // save once you pause typing, not on every key
