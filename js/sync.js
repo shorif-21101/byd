@@ -101,8 +101,9 @@ const Sync = (function () {
     return data;
   }
 
-  async function pullAll(quiet) {
+    async function pullAll(quiet) {
     if (!client || !code || busy) return;
+    if (quiet && document.querySelector('.pm-overlay[style*="flex"]')) return;   // never sync behind an open pop-up
     busy = true;
     if (!quiet) setStatus('syncing');
     try {
@@ -283,7 +284,7 @@ const Sync = (function () {
   window.addEventListener('online', () => { if (client) pullAll(); });
   document.addEventListener('visibilitychange', () => {
     if (document.hidden) { hiddenAt = Date.now(); return; }
-    if (client && hiddenAt && Date.now() - hiddenAt > 5000) pullAll(true);
+        if (client && hiddenAt && Date.now() - hiddenAt > 5000) setTimeout(() => pullAll(true), 2500);
   });
 
   init();

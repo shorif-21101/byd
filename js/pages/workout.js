@@ -257,7 +257,7 @@
     setTimeout(() => exOverlay.classList.remove('opening'), 400);
     sfx('open');
   }
-  function closeEx() { openEx = null; renderExModal(); }
+   function closeEx() { flushSave(); openEx = null; renderExModal(); }
 
   // an exercise just became finished
   function afterComplete(id) {
@@ -577,13 +577,26 @@
   });
 
   // ----- TYPING REPS / KG (inside the pop-up) -----
+    let typeTimer = null;
+  function flushSave() { if (typeTimer) { clearTimeout(typeTimer); typeTimer = null; save(); } }
+
   exOverlay.addEventListener('input', e => {
     const field = e.target.dataset.field;
     if (!field || !openEx) return;
     const row = e.target.closest('.set-row');
     getSets(openEx)[Number(row.dataset.set)][field] = e.target.value;
-    save();
+    clearTimeout(typeTimer);
+    typeTimer = setTimeout(flushSave, 400);          // save once you pause typing, not on every key
   });
+
+  // tapping a box selects its number, so you can just type the new value over it
+  exOverlay.addEventListener('focusin', e => {
+    if (e.target.dataset && e.target.dataset.field) { try { e.target.select(); } catch (err) {} }
+  });
+
+  // never lose a half-typed number when you switch apps
+  document.addEventListener('visibilitychange', () => { if (document.hidden) flushSave(); });
+  window.addEventListener('pagehide', flushSave);
 
   document.addEventListener('keydown', e => { if (e.key === 'Escape' && openEx) closeEx(); });
 
