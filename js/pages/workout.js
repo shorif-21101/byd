@@ -570,6 +570,10 @@
       s.done = !s.done;
       row.classList.toggle('done', s.done);
       btn.classList.toggle('on', s.done);
+            s.done = !s.done;
+      row.classList.toggle('done', s.done);
+      btn.classList.toggle('on', s.done);
+      if (s.done) carryDown(Number(row.dataset.set));
 
       if (s.done && allTicked(id)) {
         state.exDone[id] = true;
@@ -584,6 +588,24 @@
   });
 
   // ----- TYPING REPS / KG (inside the pop-up) -----
+    // copy this set's reps/kg into the sets below that you haven't touched yet
+  function carryDown(i) {
+    const sets = getSets(openEx);
+    ['reps', 'kg'].forEach(field => {
+      const value = sets[i][field];
+      if (value === '' || value === undefined) return;
+      for (let j = i + 1; j < sets.length; j++) {
+        const n = sets[j];
+        n.auto = n.auto || {};
+        if (n.done) break;
+        if (n[field] !== '' && !n.auto[field]) break;
+        n[field] = value;
+        n.auto[field] = true;
+        const box = exOverlay.querySelector('.set-row[data-set="' + j + '"] [data-field="' + field + '"]');
+        if (box) box.value = value;
+      }
+    });
+  }
     let typeTimer = null;
   function flushSave() { if (typeTimer) { clearTimeout(typeTimer); typeTimer = null; save(); } }
 
