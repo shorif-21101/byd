@@ -30,6 +30,41 @@
     return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   }
   function dispName(n) { return esc(n).replace(' - ', ' — '); }
+  
+  // small styled pop-up with a list of buttons -> resolves to the chosen value, or null if cancelled
+  function choose(cfg) {
+    return new Promise(resolve => {
+      const ov = document.createElement('div');
+      ov.className = 'dlg-overlay';
+      ov.innerHTML = `
+        <div class="dlg info" role="dialog" aria-modal="true">
+          <div class="dlg-title">${esc(cfg.title)}</div>
+          <div class="dlg-actions" style="flex-direction:column;margin-top:20px;max-height:50vh;overflow-y:auto">
+            ${cfg.options.map((o, i) => `<button class="btn" data-pick="${i}" style="flex:none;width:100%;height:auto;min-height:48px;white-space:normal">${esc(o.label)}</button>`).join('')}
+            <button class="btn ghost" data-pick="cancel" style="flex:none;width:100%">Cancel</button>
+          </div>
+        </div>`;
+
+      function close(v) {
+        document.removeEventListener('keydown', onKey, true);
+        ov.remove();
+        resolve(v);
+      }
+      function onKey(e) {
+        if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); close(null); }   // closes only this pop-up
+      }
+
+      ov.addEventListener('click', e => {
+        if (e.target === ov) { close(null); return; }
+        const b = e.target.closest('[data-pick]');
+        if (!b) return;
+        close(b.dataset.pick === 'cancel' ? null : cfg.options[Number(b.dataset.pick)].value);
+      });
+
+      document.addEventListener('keydown', onKey, true);
+      document.body.appendChild(ov);
+    });
+  }
 
   // "Day 1 : Chest & Tricep (PUSH)"  ->  main "Day 1", sub "Chest & Tricep (PUSH)"
   function parseName(name) {
@@ -167,14 +202,54 @@
         preset.exercises = preset.exercises.filter(x => x.id !== btn.dataset.ex);
         save(); renderAll();
         break;
-      case 'rename': {
-        const n = await UI.prompt({
-          title: 'Rename preset',
-          message: 'Example: Day 1 : Chest & Tricep (PUSH)',
-          value: preset.name,
-          placeholder: 'Preset name'
+            case 'rename': {
+        const presetId = preset.id;
+        const what = await choose({
+          title: 'What do you want to rename?',
+          options: [
+            { label: 'Day name', value: 'day' },
+            { label: 'Exercise name', value: 'ex' }
+          ]
         });
-        if (n && n.trim()) { preset.name = n.trim(); save(); renderAll(); sfx('save'); }
+
+        if (what === 'day') {
+          const n = await UI.prompt({
+            title: 'Rename preset',
+            message: 'Example: Day 1 : Chest & Tricep (PUSH)',
+            value: preset.name,
+            placeholder: 'Preset name'
+          });
+          const live = presets.find(p => p.id === presetId);
+          if (live && n && n.trim()) { live.name = n.trim(); save(); renderAll(); sfx('save'); }
+        }
+
+        if (what === 'ex') {
+          if (!preset.exercises.length) {
+            UI.alert({ title: 'No exercises yet', message: 'Add an exercise first, then you can rename it.' });
+            break;
+          }
+          const exId = await choose({
+            title: 'Which exercise?',
+            options: preset.exercises.map(x => ({ label: x.name.replace(' - ', ' — '), value: x.id }))
+          });
+          if (!exId) break;
+
+          const cur = (presets.find(p => p.id === presetId) || preset).exercises.find(x => x.id === exId);
+          if (!cur) break;
+          const n = await UI.prompt({
+            title: 'Rename exercise',
+            message: 'Example: Chest - Flat Benchpress',
+            value: cur.name,
+            placeholder: 'Exercise name'
+          });
+
+          const live = presets.find(p => p.id === presetId);
+          const ex = live && live.exercises.find(x => x.id === exId);
+          if (ex && n && n.trim()) {
+            ex.name = n.trim().slice(0, 80);       // only the name changes, the id stays the same
+            save(); renderAll(); sfx('save');
+          }
+        }
         break;
       }
       case 'delete': {
