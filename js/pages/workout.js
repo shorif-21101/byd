@@ -467,7 +467,18 @@
 
     if (action === 'load-today') { state.loaded = true; state.loadedOn = todayKey(); save(); render(); sfx('boot'); return; }
     if (action === 'again')      { state = fresh(); save(); render(); sfx('boot'); return; }
-    if (action === 'finish')     { finish(false); return; }
+        if (action === 'finish') {
+      if (finishing) return;                       // already finishing, ignore extra taps
+      const yes = await UI.confirm({
+        title: 'Finish today\'s workout?',
+        message: 'This saves your sets to the Data Log and closes today\'s session.',
+        okText: 'Finish workout',
+        requireText: 'Finish'                      // the OK button stays locked until you type this
+      });
+      if (!yes) return;
+      finish(false);
+      return;
+    }
 
     if (action === 'change-day') {
       if (hasProgress()) {

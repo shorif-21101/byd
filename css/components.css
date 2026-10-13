@@ -61,6 +61,10 @@
 }
 .ex-x { background: none; border: none; color: var(--text-dim); font-size: 1.3rem; line-height: 1; cursor: pointer; padding: 0 4px; transition: color 0.2s; }
 .ex-x:hover { color: var(--bad); }
+.ex-label { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.ex-acts { display: flex; align-items: center; gap: 2px; flex-shrink: 0; }
+.ex-edit { background: none; border: none; color: var(--text-dim); font-size: 1.05rem; line-height: 1; cursor: pointer; padding: 6px 8px; transition: color 0.2s; }
+.ex-edit:hover { color: var(--text); }
 
 @media (max-width: 768px) {
   .preset-head { flex-direction: column; align-items: flex-start; }

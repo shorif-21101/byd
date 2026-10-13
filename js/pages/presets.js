@@ -2,6 +2,7 @@
 // Data shape saved under "presets":
 // [ { id, name, exercises: [ { id, name } ] } ]
 // Page shows small square cards; clicking one opens a centred pop-up to edit it.
+// Renaming a day or an exercise also updates old saved workouts ("history"), so every page matches.
 
 (function () {
   let presets = DB.load('presets', []);
@@ -30,41 +31,6 @@
     return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   }
   function dispName(n) { return esc(n).replace(' - ', ' — '); }
-  
-  // small styled pop-up with a list of buttons -> resolves to the chosen value, or null if cancelled
-  function choose(cfg) {
-    return new Promise(resolve => {
-      const ov = document.createElement('div');
-      ov.className = 'dlg-overlay';
-      ov.innerHTML = `
-        <div class="dlg info" role="dialog" aria-modal="true">
-          <div class="dlg-title">${esc(cfg.title)}</div>
-          <div class="dlg-actions" style="flex-direction:column;margin-top:20px;max-height:50vh;overflow-y:auto">
-            ${cfg.options.map((o, i) => `<button class="btn" data-pick="${i}" style="flex:none;width:100%;height:auto;min-height:48px;white-space:normal">${esc(o.label)}</button>`).join('')}
-            <button class="btn ghost" data-pick="cancel" style="flex:none;width:100%">Cancel</button>
-          </div>
-        </div>`;
-
-      function close(v) {
-        document.removeEventListener('keydown', onKey, true);
-        ov.remove();
-        resolve(v);
-      }
-      function onKey(e) {
-        if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); close(null); }   // closes only this pop-up
-      }
-
-      ov.addEventListener('click', e => {
-        if (e.target === ov) { close(null); return; }
-        const b = e.target.closest('[data-pick]');
-        if (!b) return;
-        close(b.dataset.pick === 'cancel' ? null : cfg.options[Number(b.dataset.pick)].value);
-      });
-
-      document.addEventListener('keydown', onKey, true);
-      document.body.appendChild(ov);
-    });
-  }
 
   // "Day 1 : Chest & Tricep (PUSH)"  ->  main "Day 1", sub "Chest & Tricep (PUSH)"
   function parseName(name) {
@@ -119,8 +85,11 @@
           ${p.exercises.length
             ? p.exercises.map(e => `
               <li class="ex-item">
-                <span>${dispName(e.name)}</span>
-                <button class="ex-x" data-action="remove-ex" data-ex="${e.id}" aria-label="Remove">×</button>
+                <span class="ex-label">${dispName(e.name)}</span>
+                <span class="ex-acts">
+                  <button class="ex-edit" data-action="rename-ex" data-ex="${e.id}" aria-label="Rename exercise">✎</button>
+                  <button class="ex-x" data-action="remove-ex" data-ex="${e.id}" aria-label="Remove">×</button>
+                </span>
               </li>`).join('')
             : '<li class="empty-note">No exercises yet</li>'}
         </ul>
@@ -131,7 +100,7 @@
         </div>
 
         <div class="pm-actions">
-          <button class="btn small" data-action="rename">Rename</button>
+          <button class="btn small" data-action="rename">Rename day</button>
           <button class="btn small danger" data-action="delete">Delete preset</button>
         </div>
       </div>`;
@@ -202,53 +171,54 @@
         preset.exercises = preset.exercises.filter(x => x.id !== btn.dataset.ex);
         save(); renderAll();
         break;
-            case 'rename': {
+      case 'rename': {
         const presetId = preset.id;
-        const what = await choose({
-          title: 'What do you want to rename?',
-          options: [
-            { label: 'Day name', value: 'day' },
-            { label: 'Exercise name', value: 'ex' }
-          ]
+        const n = await UI.prompt({
+          title: 'Rename day',
+          message: 'Example: Day 1 : Chest & Tricep (PUSH)',
+          value: preset.name,
+          placeholder: 'Preset name'
         });
+        const live = presets.find(p => p.id === presetId);
+        if (live && n && n.trim() && n.trim() !== live.name) {
+          const oldName = live.name;
+          live.name = n.trim();
+          save();
 
-        if (what === 'day') {
-          const n = await UI.prompt({
-            title: 'Rename preset',
-            message: 'Example: Day 1 : Chest & Tricep (PUSH)',
-            value: preset.name,
-            placeholder: 'Preset name'
-          });
-          const live = presets.find(p => p.id === presetId);
-          if (live && n && n.trim()) { live.name = n.trim(); save(); renderAll(); sfx('save'); }
+          // update old workouts so the Data Log and Activity show the new day name
+          const hist = DB.load('history', []);
+          let touched = false;
+          hist.forEach(h => { if (h.preset === oldName) { h.preset = live.name; touched = true; } });
+          if (touched) DB.save('history', hist);
+
+          renderAll(); sfx('save');
         }
+        break;
+      }
+      case 'rename-ex': {
+        const presetId = preset.id;
+        const exId = btn.dataset.ex;
+        const cur = preset.exercises.find(x => x.id === exId);
+        if (!cur) break;
+        const n = await UI.prompt({
+          title: 'Rename exercise',
+          message: 'Example: Chest - Flat Benchpress',
+          value: cur.name,
+          placeholder: 'Exercise name'
+        });
+        const live = presets.find(p => p.id === presetId);
+        const ex = live && live.exercises.find(x => x.id === exId);
+        if (ex && n && n.trim() && n.trim().slice(0, 80) !== ex.name) {
+          ex.name = n.trim().slice(0, 80);       // the id stays the same
+          save();
 
-        if (what === 'ex') {
-          if (!preset.exercises.length) {
-            UI.alert({ title: 'No exercises yet', message: 'Add an exercise first, then you can rename it.' });
-            break;
-          }
-          const exId = await choose({
-            title: 'Which exercise?',
-            options: preset.exercises.map(x => ({ label: x.name.replace(' - ', ' — '), value: x.id }))
-          });
-          if (!exId) break;
+          // update every old workout that used this exercise
+          const hist = DB.load('history', []);
+          let touched = false;
+          hist.forEach(h => { if (h.exId === exId) { h.exName = ex.name; touched = true; } });
+          if (touched) DB.save('history', hist);
 
-          const cur = (presets.find(p => p.id === presetId) || preset).exercises.find(x => x.id === exId);
-          if (!cur) break;
-          const n = await UI.prompt({
-            title: 'Rename exercise',
-            message: 'Example: Chest - Flat Benchpress',
-            value: cur.name,
-            placeholder: 'Exercise name'
-          });
-
-          const live = presets.find(p => p.id === presetId);
-          const ex = live && live.exercises.find(x => x.id === exId);
-          if (ex && n && n.trim()) {
-            ex.name = n.trim().slice(0, 80);       // only the name changes, the id stays the same
-            save(); renderAll(); sfx('save');
-          }
+          renderAll(); sfx('save');
         }
         break;
       }
