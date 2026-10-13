@@ -1,0 +1,559 @@
+/* =====================================================================
+   BYD NEUMORPHISM SKIN  -  soft light theme, cool accents
+   Loaded LAST (after design.css) so it restyles everything.
+   Looks only. No functionality is touched.
+
+   To change the colours later, edit only the variables in :root below.
+   ===================================================================== */
+
+:root {
+  /* surface + text */
+  --bg: #e6ebf2;            /* soft cool grey-blue (easy on the eyes) */
+  --panel: #e6ebf2;
+  --panel-2: #e6ebf2;
+  --line: rgba(163, 177, 198, 0.28);
+  --text: #38425a;
+  --text-dim: #66718a;
+
+  /* accents (cool palette) */
+  --accent: #4f7cff;               /* periwinkle blue */
+  --accent-rgb: 79, 124, 255;
+  --accent-ink: #3a63e0;           /* darker blue for small text */
+  --todo-rgb: 139, 124, 246;       /* lavender = exercise to do */
+  --done-rgb: 32, 178, 150;        /* teal = exercise finished */
+  --good: #1fa97f;
+  --bad: #e5566b;
+  --radius: 22px;
+
+  /* neumorphic light + shadow */
+  --sd: rgba(150, 164, 189, 0.55);
+  --sl: rgba(255, 255, 255, 0.95);
+
+  --out-lg: 12px 12px 26px var(--sd), -12px -12px 26px var(--sl);
+  --out:    8px 8px 16px var(--sd), -8px -8px 16px var(--sl);
+  --out-sm: 5px 5px 10px var(--sd), -5px -5px 10px var(--sl);
+  --out-xs: 3px 3px 6px var(--sd), -3px -3px 6px var(--sl);
+  --in:     inset 6px 6px 12px var(--sd), inset -6px -6px 12px var(--sl);
+  --in-sm:  inset 4px 4px 8px var(--sd), inset -4px -4px 8px var(--sl);
+  --in-xs:  inset 2px 2px 4px var(--sd), inset -2px -2px 4px var(--sl);
+}
+
+html { background: var(--bg); }
+body {
+  background-color: var(--bg);
+  background-image: none;
+  color: var(--text);
+}
+.bg { display: none; }
+
+/* soft scrollbars */
+.stage, .pm-panel, .act-side, #workout-root > .wk-list {
+  scrollbar-width: thin;
+  scrollbar-color: #c3ccdb transparent;
+}
+
+/* room so the soft shadows are never cut off */
+@media (min-width: 769px) {
+  .stage { padding: 8px 16px 8px 10px; }
+}
+
+/* ===== RAISED SURFACES ===== */
+.glass,
+.card,
+.card:hover,
+.glass:hover {
+  background: var(--bg);
+  border: none;
+  box-shadow: var(--out);
+}
+.card { border-radius: var(--radius); }
+
+/* chips card on Workout page stays flat (no box around the pills) */
+.card.chips-card,
+.card.chips-card:hover {
+  background: none;
+  box-shadow: none;
+  border-radius: 0;
+}
+
+/* ===== TITLES ===== */
+h1 { color: var(--text); }
+h1 span { color: var(--accent); }
+.eyebrow, .section-label, .log-month, .hint { color: var(--text-dim); }
+
+/* ===== SIDEBAR ===== */
+.nav { background: var(--bg); border: none; box-shadow: var(--out-lg); }
+.brand { color: var(--text); text-shadow: none; }
+.brand b { color: var(--accent); }
+
+.nav-btn[data-page="workout"]  { --c: #8b7cf6; --c-rgb: 139, 124, 246; }
+.nav-btn[data-page="presets"]  { --c: #20b296; --c-rgb: 32, 178, 150; }
+.nav-btn[data-page="progress"] { --c: #2fa3e0; --c-rgb: 47, 163, 224; }
+.nav-btn[data-page="datalog"]  { --c: #e0a23a; --c-rgb: 224, 162, 58; }
+.nav-btn[data-page="activity"] { --c: #d46fb0; --c-rgb: 212, 111, 176; }
+
+.nav-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-dim);
+  box-shadow: none;
+}
+.nav-btn:hover {
+  background: transparent;
+  color: var(--text);
+  box-shadow: var(--out-xs);
+}
+.nav-btn.active {
+  background: var(--bg);
+  border: none;
+  color: var(--text);
+  box-shadow: var(--in-sm);
+}
+.nav-btn:focus-visible { outline: 2px solid rgba(var(--accent-rgb), 0.6); outline-offset: 2px; }
+
+.led { box-shadow: none; }
+.nav-btn:hover .led,
+.nav-btn.active .led { box-shadow: 0 0 8px var(--c); }
+.nav-ico { opacity: 0.9; }
+
+.side-session {
+  background: var(--bg);
+  border: none;
+  box-shadow: var(--in-sm);
+}
+.side-label, .side-sub { color: var(--text-dim); }
+.side-title { color: var(--text); }
+
+/* ===== BUTTONS ===== */
+.btn {
+  background: var(--bg);
+  border: none;
+  color: var(--text);
+  box-shadow: var(--out-sm);
+}
+.btn:hover { background: var(--bg); color: var(--accent-ink); }
+.btn:active { box-shadow: var(--in-sm); transform: scale(0.98); }
+
+.btn.danger:hover { background: var(--bg); color: var(--bad); border: none; }
+
+.btn.ghost,
+.btn.ghost:hover {
+  background: transparent;
+  box-shadow: none;
+  color: var(--text-dim);
+}
+.btn.ghost:hover { color: var(--accent-ink); }
+
+.btn.primary,
+.btn.finish,
+.btn.start-btn,
+.dlg-ok {
+  background: linear-gradient(145deg, #6d94ff, #4a74f2);
+  border: none;
+  color: #fff;
+  box-shadow: 6px 6px 14px rgba(79, 124, 255, 0.35), -5px -5px 12px var(--sl);
+  animation: none;
+}
+.btn.primary:hover,
+.btn.finish:hover,
+.btn.start-btn:hover,
+.dlg-ok:hover {
+  background: linear-gradient(145deg, #7a9eff, #5580f5);
+  border: none;
+  color: #fff;
+}
+.btn.primary:active,
+.btn.finish:active,
+.btn.start-btn:active,
+.dlg-ok:active {
+  box-shadow: inset 3px 3px 8px rgba(20, 40, 120, 0.35), inset -2px -2px 6px rgba(255, 255, 255, 0.2);
+}
+.dlg-ok:disabled,
+.dlg-ok:disabled:hover {
+  background: linear-gradient(145deg, #6d94ff, #4a74f2);
+  border: none;
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* ===== INPUTS (pressed-in) ===== */
+.input {
+  background: var(--bg);
+  border: none;
+  color: var(--text);
+  box-shadow: var(--in-sm);
+}
+.input:focus {
+  border: none;
+  box-shadow: var(--in-sm), 0 0 0 2px rgba(var(--accent-rgb), 0.4);
+}
+.input::placeholder { color: #9aa5ba; }
+input[type="datetime-local"] { color-scheme: light; }
+
+/* ===== CHIPS ===== */
+.chip {
+  background: var(--bg);
+  border: none;
+  color: var(--text-dim);
+  box-shadow: var(--out-xs);
+}
+.chip:hover { color: var(--text); border: none; }
+.chip.on {
+  background: var(--bg);
+  border: none;
+  color: var(--accent-ink);
+  font-weight: 600;
+  box-shadow: var(--in-xs);
+}
+.chip.demo { border: none; }
+.chip.locked { cursor: default; }
+
+/* ===== PROGRESS BARS (inset track) ===== */
+.wk-prog,
+.ex-bar,
+.ex-prog,
+.split-track {
+  background: #d9e0eb;
+  box-shadow: var(--in-xs);
+}
+.wk-prog-bar { background: linear-gradient(90deg, #8b7cf6, #20b296); }
+.ex-bar i,
+.ex-card.todo .ex-bar i,
+.ex-prog i { background: linear-gradient(90deg, #8b7cf6, #4f7cff); }
+.ex-card.finished .ex-bar i,
+.ex-panel.finished .ex-prog i { background: #20b296; }
+
+/* ===== WORKOUT: EXERCISE CARDS ===== */
+.ex-card,
+.ex-card.todo,
+.ex-card.finished {
+  border: none;
+  background: var(--bg);
+}
+.ex-card.todo {
+  background: linear-gradient(135deg, rgba(var(--todo-rgb), 0.12), rgba(var(--todo-rgb), 0) 70%), var(--bg);
+  box-shadow: var(--out-sm), inset 4px 0 0 rgba(var(--todo-rgb), 0.9);
+}
+.ex-card.finished {
+  background: linear-gradient(135deg, rgba(var(--done-rgb), 0.14), rgba(var(--done-rgb), 0) 70%), var(--bg);
+  box-shadow: var(--out-sm), inset 4px 0 0 rgb(var(--done-rgb));
+}
+.ex-card.todo:hover,
+.ex-card.finished:hover { border: none; }
+
+.ex-card.dragging {
+  box-shadow: 16px 16px 34px rgba(120, 136, 165, 0.6), -8px -8px 20px rgba(255, 255, 255, 0.85) !important;
+}
+
+.ex-card.todo .ex-count { color: #6f60e0; }
+.ex-card.finished .ex-count { color: #14917a; }
+.ex-count { color: var(--text-dim); }
+
+.handle { color: #9aa5ba; }
+.handle:hover, .ex-card.dragging .handle { color: var(--accent); }
+.ex-card .handle:hover { color: #8b7cf6; }
+.ex-card.finished .handle:hover { color: #20b296; }
+
+.ex-body { border-top: 1px solid rgba(163, 177, 198, 0.35); }
+
+.ex-placeholder {
+  border: 1.5px dashed rgba(var(--todo-rgb), 0.55);
+  background: rgba(163, 177, 198, 0.18);
+  box-shadow: var(--in-xs);
+}
+
+/* tick circles */
+.tick {
+  background: var(--bg);
+  border: none;
+  color: #fff;
+  box-shadow: var(--out-xs);
+}
+.tick.on {
+  background: linear-gradient(145deg, #3fd0b4, #1fa98f);
+  border: none;
+  color: #fff;
+  box-shadow: 3px 3px 8px rgba(32, 178, 150, 0.4), -3px -3px 6px var(--sl);
+}
+.set-row.done .input { opacity: 0.6; }
+
+/* ===== EXERCISE POP-UP ===== */
+.ex-panel.todo,
+.ex-panel.finished { border: none; }
+.ex-panel.todo {
+  box-shadow: var(--out-lg), 0 0 0 2px rgba(var(--todo-rgb), 0.35);
+}
+.ex-panel.finished {
+  box-shadow: var(--out-lg), 0 0 0 2px rgba(var(--done-rgb), 0.45);
+}
+
+/* ===== PRESETS PAGE ===== */
+.preset-tile {
+  background: var(--bg);
+  border: none;
+  color: var(--text);
+  box-shadow: var(--out);
+}
+.preset-tile:hover {
+  background: var(--bg);
+  border: none;
+  transform: translateY(-3px);
+  box-shadow: 11px 11px 22px var(--sd), -11px -11px 22px var(--sl);
+}
+.preset-tile:active { transform: scale(0.98); box-shadow: var(--in-sm); }
+.tile-day { color: var(--text); }
+.tile-sub, .tile-count, .tile-arrow, .tile-date { color: var(--text-dim); }
+.preset-tile:hover .tile-arrow { color: var(--accent); }
+
+.ex-item {
+  background: var(--bg);
+  border: none;
+  box-shadow: var(--in-xs);
+}
+.ex-x:hover { color: var(--bad); }
+.ex-edit:hover { color: var(--accent-ink); }
+
+/* ===== PROGRESS PAGE ===== */
+.verdict,
+.badge {
+  background: var(--bg);
+  border: none;
+  box-shadow: var(--in-xs);
+  color: var(--text-dim);
+}
+.verdict.up   { color: var(--good); background: rgba(31, 169, 127, 0.1); border: none; }
+.verdict.down { color: var(--bad);  background: rgba(229, 86, 107, 0.1); border: none; }
+.verdict.flat { color: #7d889f; }
+.badge b { color: var(--text); }
+.badge.up   { color: var(--good); }
+.badge.down { color: var(--bad); }
+.demo-banner {
+  background: var(--bg);
+  border: none;
+  box-shadow: var(--in-xs);
+  color: var(--text-dim);
+}
+.pg-chart svg line { stroke: rgba(120, 135, 160, 0.25); }
+.pg-chart svg text { fill: #66718a; }
+
+/* ===== DATA LOG ===== */
+.log-ex {
+  background: var(--bg);
+  border: none;
+  box-shadow: var(--in-sm);
+}
+.log-set {
+  background: var(--bg);
+  border: none;
+  color: var(--text-dim);
+  box-shadow: var(--out-xs);
+}
+.log-set b { color: var(--text); }
+.log-ex.editing { box-shadow: var(--in-sm), 0 0 0 2px rgba(var(--accent-rgb), 0.35); }
+.log-x:hover { color: var(--bad); }
+
+/* ===== POP-UPS ===== */
+.pm-overlay {
+  background: rgba(214, 222, 235, 0.72);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+}
+.pm-panel {
+  background: var(--bg);
+  border: none;
+  box-shadow: var(--out-lg);
+}
+.pm-close {
+  background: var(--bg);
+  border: none;
+  color: var(--text);
+  box-shadow: var(--out-xs);
+}
+.pm-close:hover { background: var(--bg); color: var(--bad); }
+.pm-close:active { box-shadow: var(--in-xs); }
+.pm-actions { border-top: 1px solid rgba(163, 177, 198, 0.35); }
+.pm-day { color: var(--text); }
+
+/* styled dialogs (confirm / alert / prompt) */
+.dlg-overlay {
+  background: rgba(214, 222, 235, 0.78);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+}
+.dlg {
+  background: var(--bg);
+  border: none;
+  box-shadow: var(--out-lg);
+}
+.dlg::before,
+.dlg.info::before { display: none; }
+.dlg-icon {
+  background: var(--bg);
+  color: var(--bad);
+  box-shadow: var(--out-sm);
+}
+.dlg.info .dlg-icon { background: var(--bg); color: var(--accent); }
+.dlg-title { color: var(--text); }
+.dlg-msg, .dlg-hint { color: var(--text-dim); }
+.dlg-hint b { color: var(--bad); }
+/* danger dialogs get a soft rose confirm button, info dialogs stay blue */
+.dlg:not(.info) .dlg-ok,
+.dlg:not(.info) .dlg-ok:hover,
+.dlg:not(.info) .dlg-ok:disabled,
+.dlg:not(.info) .dlg-ok:disabled:hover {
+  background: linear-gradient(145deg, #f27a8b, #e0516a);
+  box-shadow: 6px 6px 14px rgba(229, 86, 107, 0.32), -5px -5px 12px var(--sl);
+}
+
+/* ===== SOUND + CLOUD BUTTONS ===== */
+.sfx-toggle,
+.cloud-btn {
+  background: var(--bg);
+  border: none;
+  color: var(--text);
+  box-shadow: var(--out-sm);
+}
+.sfx-toggle:hover,
+.cloud-btn:hover { background: var(--bg); color: var(--accent-ink); }
+.sfx-toggle:active,
+.cloud-btn:active { box-shadow: var(--in-xs); }
+.sfx-toggle.off { color: var(--text-dim); }
+.cloud-btn .dot { background: #a3adc0; border: 2px solid var(--bg); }
+.cloud-btn[data-status="online"] .dot  { background: #20b296; }
+.cloud-btn[data-status="syncing"] .dot { background: #e0a23a; }
+.cloud-btn[data-status="error"] .dot   { background: #e5566b; }
+
+/* ===== LOGIN / AUTH SCREEN ===== */
+.auth-overlay { background-color: var(--bg); background-image: none; }
+.auth-card { background: var(--bg); border: none; box-shadow: var(--out-lg); }
+.auth-brand { color: var(--text); }
+.auth-brand b { color: var(--accent); }
+.auth-sub { color: var(--text-dim); }
+.auth-err { color: var(--bad); }
+
+/* ===== ACTIVITY PAGE ===== */
+.cal-arrow {
+  background: var(--bg);
+  border: none;
+  color: var(--text);
+  box-shadow: var(--out-sm);
+}
+.cal-arrow:hover { background: var(--bg); color: var(--accent-ink); border: none; }
+.cal-arrow:active { box-shadow: var(--in-sm); }
+.cal-title { color: var(--text); }
+
+/* calendar: separate soft tiles instead of one dark table */
+.cal {
+  background: none;
+  border: none;
+  border-radius: 0;
+  overflow: visible;
+  padding: 4px;
+}
+.cal-head { background: none; border: none; }
+.cal-head div { color: var(--text-dim); }
+.cal-grid { background: none; gap: 8px; }
+
+.cal-cell {
+  background: var(--bg);
+  border-radius: 14px;
+  color: var(--text);
+  box-shadow: var(--in-xs);          /* empty day = pressed in */
+}
+.cal-cell.blank { background: none; box-shadow: none; }
+.cal-n { color: var(--text-dim); }
+.cal-none { color: #a3adc0; }
+.cal-cell.today { box-shadow: var(--in-xs), 0 0 0 2px rgba(var(--accent-rgb), 0.45); }
+.cal-cell.today .cal-n { color: var(--accent-ink); }
+
+/* gym day = raised lavender tile */
+.cal-cell.gym {
+  background: linear-gradient(145deg, rgba(var(--todo-rgb), 0.2), rgba(var(--todo-rgb), 0.06)), var(--bg);
+  box-shadow: var(--out-xs), inset 0 -3px 0 rgb(var(--todo-rgb));
+}
+.cal-cell.gym:hover { filter: none; transform: translateY(-2px); }
+.cal-cell.gym.today { box-shadow: var(--out-xs), inset 0 -3px 0 rgb(var(--todo-rgb)), 0 0 0 2px rgba(var(--accent-rgb), 0.45); }
+.cal-cell.gym .cal-n { color: #6a5bd8; }
+.cal-cell.gym.today .cal-n { color: var(--accent-ink); }
+.cal-txt { color: #6a5bd8; }
+.cal-sub { color: #7f74cc; }
+
+/* side cards / stats */
+.side-card,
+.stat {
+  background: var(--bg);
+  border: none;
+  box-shadow: var(--out-sm);
+}
+.act-side { padding: 6px 10px 12px 6px; }
+
+.mini {
+  background: var(--bg);
+  border: none;
+  box-shadow: var(--in-xs);
+}
+.mini-s { color: #8a95aa; }
+.stat-k, .mini-k, .stat-s, .stat-of { color: var(--text-dim); }
+.side-card .li { color: var(--text-dim); }
+.side-card .li + .li { border-top: 1px solid rgba(163, 177, 198, 0.35); }
+.side-card .li b { color: var(--text); }
+
+.wd {
+  background: var(--bg);
+  border: none;
+  color: var(--text-dim);
+  box-shadow: var(--in-xs);
+}
+.wd.on {
+  background: linear-gradient(145deg, #9d90f8, #7b6cf0);
+  border: none;
+  color: #fff;
+  box-shadow: var(--out-xs);
+}
+.wd.today { box-shadow: var(--in-xs), 0 0 0 2px rgba(var(--accent-rgb), 0.5); }
+.wd.on.today { box-shadow: var(--out-xs), 0 0 0 2px rgba(var(--accent-rgb), 0.5); }
+
+.goal-btn {
+  background: var(--bg);
+  border: none;
+  color: var(--text);
+  box-shadow: var(--out-xs);
+}
+.goal-btn:hover { background: var(--bg); color: var(--accent-ink); }
+.goal-btn:active { box-shadow: var(--in-xs); }
+.split-track i { background: linear-gradient(90deg, #8b7cf6, #4f7cff); }
+
+/* ===== WORKOUT FINISHED SCREEN ===== */
+.done-title {
+  background: linear-gradient(90deg, #4f7cff, #8b7cf6);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.done-msg { color: var(--text-dim); }
+.done-stats span {
+  background: var(--bg);
+  border: none;
+  color: var(--text-dim);
+  box-shadow: var(--out-xs);
+}
+.done-stats b { color: var(--accent-ink); }
+.done-rings span { border-color: rgba(var(--todo-rgb), 0.55); }
+.dc-circle { fill: rgba(var(--todo-rgb), 0.15); stroke: #8b7cf6; }
+.dc-tick { stroke: #20b296; }
+.done-check { filter: drop-shadow(0 0 10px rgba(139, 124, 246, 0.45)); }
+
+/* ===== PHONE ===== */
+@media (max-width: 768px) {
+  .nav { background: var(--bg); box-shadow: var(--out); }
+  .nav-btn.active { box-shadow: var(--in-xs); }
+  .cal-grid { gap: 5px; }
+  .cal-cell { border-radius: 10px; }
+  .cal { padding: 2px; }
+  .preset-tile { border-radius: 18px; }
+}
+
+/* ===== WORKOUT LIST: keep soft shadows from being clipped (desktop scroll box) ===== */
+@media (min-width: 769px) {
+  #workout-root > .wk-list { padding: 6px 12px 16px 6px; }
+}

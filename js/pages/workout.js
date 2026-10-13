@@ -294,7 +294,7 @@
   function launchConfetti() {
     const box = root.querySelector('.confetti-box');
     if (!box) return;
-    const colors = ['#a66bff', '#c49bff', '#34d399', '#6ee7b7', '#ffffff'];
+        const colors = ['#8b7cf6', '#b3a8ff', '#2fbfa5', '#7fe0cc', '#4f7cff'];
     for (let i = 0; i < 36; i++) {
       const p = document.createElement('i');
       p.className = 'confetti';

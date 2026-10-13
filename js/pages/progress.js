@@ -18,7 +18,7 @@
     volume: { label: 'Volume',     unit: 'kg' },
     reps:   { label: 'Total reps', unit: 'reps' }
   };
-  const COLORS = { up: '#7dff6b', down: '#ff4d5e', flat: '#aab3c0' };
+   const COLORS = { up: '#1fa97f', down: '#e5566b', flat: '#8d97ab' };
 
     let sel = DB.load('progress', { presetIds: [], range: '3m', metric: 'avgkg' });
   let demo = false;   // demo data is never saved
