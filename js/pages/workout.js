@@ -120,53 +120,66 @@
     return null;
   }
 
-  // ----- HEADER: day name, date, year -----
-  function todayHeader() {
-    const d = new Date();
-    return `
-      <div class="today">
-        <div class="today-day">${d.toLocaleDateString('en-GB', { weekday: 'long' })}</div>
-        <div class="today-date">${d.toLocaleDateString('en-GB', { day: 'numeric', month: 'long' })}</div>
-        <div class="today-year">${d.getFullYear()}</div>
-      </div>`;
+  // ----- ONE EXERCISE ROW (compact; sets live in the pop-up) -----
+  const CHECK_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
+  const pad2 = n => String(n).padStart(2, '0');
+
+  // grey line under the name: set count + reps and kg of your heaviest set last time
+  function metaText(id, sets) {
+    let t = sets.length + (sets.length === 1 ? ' set' : ' sets');
+    const last = lastTime(id);
+    if (last && last.length) {
+      const top = last.reduce((a, b) => (b.kg > a.kg ? b : a));
+      t += ' · ' + top.reps + ' reps · ' + (Math.round(top.kg * 10) / 10) + ' kg';
+    }
+    return t;
   }
 
-  // ----- ONE EXERCISE BAR (compact; sets live in the pop-up) -----
+  // one lit dot per ticked set
+  function dotsHTML(sets, isDone) {
+    return sets.map(s => '<i class="' + ((isDone || s.done) ? 'on' : '') + '"></i>').join('');
+  }
+
   function exerciseCard(e) {
     const sets = getSets(e.id);
-    const done = sets.filter(s => s.done).length;
     const isDone = !!state.exDone[e.id];
 
     return `
-      <div class="ex-card glass ${isDone ? 'finished' : 'todo'}" data-ex="${e.id}">
+      <div class="ex-card ${isDone ? 'finished' : 'todo'}" data-ex="${e.id}">
         <div class="ex-top" data-action="open-ex">
-          <span class="handle" data-handle>${HANDLE_ICON}</span>
-          <span class="ex-name">${dispName(e.name)}</span>
-          <span class="ex-bar"><i style="width:${isDone ? 100 : (sets.length ? (done / sets.length) * 100 : 0)}%"></i></span>
-          <span class="ex-count">${isDone ? 'Done ✓' : done + '/' + sets.length}</span>
+          <span class="ex-num"></span>
+          <span class="ex-main">
+            <span class="ex-name">${dispName(e.name)}</span>
+            <span class="ex-meta">${metaText(e.id, sets)}</span>
+          </span>
+          <span class="ex-dots">${dotsHTML(sets, isDone)}</span>
+          <span class="ex-check">${CHECK_ICON}</span>
         </div>
       </div>`;
   }
 
-  // update one bar without redrawing the page
+  // update one row without redrawing the page
   function refreshCard(card) {
     const id = card.dataset.ex;
     const sets = getSets(id);
-    const ticked = sets.filter(s => s.done).length;
     const isDone = !!state.exDone[id];
     card.classList.toggle('finished', isDone);
     card.classList.toggle('todo', !isDone);
-    card.querySelector('.ex-count').textContent = isDone ? 'Done ✓' : ticked + '/' + sets.length;
-    card.querySelector('.ex-bar i').style.width = (isDone ? 100 : (sets.length ? (ticked / sets.length) * 100 : 0)) + '%';
+    card.querySelector('.ex-meta').textContent = metaText(id, sets);
+    card.querySelector('.ex-dots').innerHTML = dotsHTML(sets, isDone);
   }
 
+  // knob, counter, percentage and segments
   function updateProgress() {
     const ex = currentExercises();
     const n = ex.filter(e => state.exDone[e.id]).length;
-    const bar = document.getElementById('wk-prog-bar');
-    const txt = document.getElementById('wk-prog-text');
-    if (bar) bar.style.width = (ex.length ? (n / ex.length) * 100 : 0) + '%';
-    if (txt) txt.textContent = n + ' of ' + ex.length + ' exercises done';
+    const frac = ex.length ? n / ex.length : 0;
+    const setText = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+    setText('wk-n', pad2(n));
+    setText('wk-pct', Math.round(frac * 100) + '%');
+    const knob = document.getElementById('wk-knob');
+    if (knob) knob.style.setProperty('--deg', (-135 + frac * 270) + 'deg');
+    document.querySelectorAll('#wk-segs i').forEach((s, i) => s.classList.toggle('on', i < n));
   }
 
   // bar + progress + pop-up header + save, all in one go
@@ -294,7 +307,7 @@
   function launchConfetti() {
     const box = root.querySelector('.confetti-box');
     if (!box) return;
-        const colors = ['#8b7cf6', '#b3a8ff', '#2fbfa5', '#7fe0cc', '#4f7cff'];
+        const colors = ['#ffb236', '#ffd48a', '#f2f2f2', '#8f8f8f', '#35d36f'];
     for (let i = 0; i < 36; i++) {
       const p = document.createElement('i');
       p.className = 'confetti';
@@ -318,11 +331,11 @@
     if (state.loaded && state.loadedOn !== key && !hasProgress()) state = fresh();
     updateSidebar();
 
-    let html = todayHeader();
+    let html = '';
 
     // 1) workout already finished today
     if (state.finishedOn === key) {
-      root.innerHTML = html + finishedScreen();
+      root.innerHTML = finishedScreen();
       if (justFinished) { launchConfetti(); justFinished = false; }
       save();
       return;
@@ -330,7 +343,7 @@
 
     // 2) nothing loaded yet -> big button
     if (!state.loaded) {
-      root.innerHTML = html + `
+      root.innerHTML = `
         <div class="start-wrap">
           <button class="btn start-btn" data-action="load-today">Load Exercise for Today</button>
         </div>`;
@@ -344,33 +357,43 @@
     const chosen = presets.find(p => state.presetIds.includes(p.id));
 
     if (!presets.length) {
-      html += '<div class="card glass empty-note">No presets yet. Build one on the Presets page first.</div>';
+      html += '<div class="module empty-note">No presets yet. Build one on the Presets page first.</div>';
     } else if (!chosen) {
       html += `
-        <div class="card glass chips-card">
-          <div class="section-label">Load preset(s)</div>
+        <div class="module pick">
+          <div class="mod-bar"><span>Select preset</span></div>
           <div class="chips">
             ${presets.map(p => `<button class="chip" data-preset="${p.id}">${esc(p.name)}</button>`).join('')}
           </div>
         </div>`;
     } else {
       html += `
-        <div class="card glass chips-card">
-          <div class="section-label">Today's workout</div>
-          <div class="chips">
-            <span class="chip on locked">${esc(chosen.name)}</span>
-            <button class="btn small ghost" data-action="change-day">Change</button>
+        <div class="module channel">
+          <i class="led-a"></i>
+          <div class="ch-text">
+            <div class="micro">Channel · Preset</div>
+            <div class="ch-name">${dispName(chosen.name)}</div>
           </div>
+          <button class="btn" data-action="change-day">Change</button>
         </div>`;
     }
 
     if (chosen && exercises.length) {
       const n = exercises.filter(e => state.exDone[e.id]).length;
+      const frac = n / exercises.length;
       html += `
-        <div class="wk-prog-wrap">
-          <div class="wk-prog"><div class="wk-prog-bar" id="wk-prog-bar" style="width:${(n / exercises.length) * 100}%"></div></div>
-          <span id="wk-prog-text">${n} of ${exercises.length} exercises done</span>
+        <div class="module progress">
+          <div class="knob-wrap">
+            <div class="knob" id="wk-knob" style="--deg:${-135 + frac * 270}deg"><i></i></div>
+            <span class="micro">Done</span>
+          </div>
+          <div class="pg-main">
+            <div class="pg-top"><span class="micro">Exercises complete</span><span class="pct" id="wk-pct">${Math.round(frac * 100)}%</span></div>
+            <div class="pg-count"><b id="wk-n">${pad2(n)}</b> / ${pad2(exercises.length)}</div>
+            <div class="segs" id="wk-segs">${exercises.map((e, i) => '<i class="' + (i < n ? 'on' : '') + '"></i>').join('')}</div>
+          </div>
         </div>`;
+      html += `<div class="list-label"><span>Exercise list</span><i></i><span>${pad2(exercises.length)}</span></div>`;
       html += '<div class="hint">Hold any exercise and drag to reorder. Tap one to log its sets.</div>';
       html += '<div class="wk-list" id="wk-list">' + exercises.map(exerciseCard).join('') + '</div>';
       html += '<button class="btn finish" data-action="finish">Finish Workout</button>';
@@ -392,7 +415,7 @@
   }
 
   function playVanish(done) {
-    const items = root.querySelectorAll('.chips-card, .wk-prog-wrap, .hint, .ex-card, .finish');
+    const items = root.querySelectorAll('.channel, .pick, .progress, .list-label, .hint, .ex-card, .finish');
     items.forEach((el, i) => {
       el.style.animationDelay = (i * 70) + 'ms';
       el.classList.add('vanish');
