@@ -1,57 +1,22 @@
-// ===== PAGE 6: AI COACH =====
-// Uses Google's free Gemini API (Google AI Studio key).
-// - Your key is saved ONLY in this browser (localStorage). It is never put in your code or synced.
-// - Every question sends a compact text summary of ALL your saved workouts, so the coach always sees fresh data.
-// - Nothing is saved to your workout data by this page.
+// ===== PAGE 6: COACH (connecting link for any AI) =====
+// Builds a ready-made prompt for ChatGPT / Claude / Gemini.
+//  - "Copy prompt + link": the prompt holds a private link. The AI opens it and reads your workout summary.
+//    (One-time Supabase setup, the page shows the code when it is needed.)
+//  - "Copy prompt + data": the prompt holds the summary itself. Always works, no setup.
+// Nothing here talks to any AI by itself and no AI key is needed.
 
 (function () {
   const root = document.getElementById('coach-root');
   if (!root) return;
 
-  const API = 'https://generativelanguage.googleapis.com/v1beta';
-  const K = { key: 'byd_coach_key', model: 'byd_coach_model', chat: 'byd_coach_chat', report: 'byd_coach_report' };
-
-  const store = {
-    get(k) { try { return localStorage.getItem(k) || ''; } catch (e) { return ''; } },
-    set(k, v) { try { localStorage.setItem(k, v); } catch (e) {} },
-    del(k) { try { localStorage.removeItem(k); } catch (e) {} }
-  };
-  const readJSON = (k, fallback) => { try { return JSON.parse(store.get(k)) || fallback; } catch (e) { return fallback; } };
-
-  let chat = readJSON(K.chat, []);
-  let models = [];            // free models found for this key
-  let busy = false;
-  let chatErr = '';
-  let renderedWithKey = null;
-
   const el = id => document.getElementById(id);
   function esc(s) {
     return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   }
-
-  // ---------- tiny markdown -> safe HTML ----------
-  function inline(s) {
-    return s.replace(/\*\*(.+?)\*\*/g, '<b>$1</b>')
-            .replace(/(^|[^*])\*(?!\s)([^*]+?)\*(?!\*)/g, '$1<i>$2</i>');
-  }
-  function md(text) {
-    const out = [];
-    let inList = false;
-    String(text).replace(/\r/g, '').split('\n').forEach(raw => {
-      const line = esc(raw.trimEnd());
-      let m = line.match(/^\s*(?:[-*•]|\d+[.)])\s+(.*)$/);
-      if (m) {
-        if (!inList) { out.push('<ul>'); inList = true; }
-        out.push('<li>' + inline(m[1]) + '</li>');
-        return;
-      }
-      if (inList) { out.push('</ul>'); inList = false; }
-      m = line.match(/^#{1,4}\s+(.*)$/);
-      if (m) out.push('<h3>' + inline(m[1]) + '</h3>');
-      else if (line.trim()) out.push('<p>' + inline(line) + '</p>');
-    });
-    if (inList) out.push('</ul>');
-    return out.join('');
+  function note(box, text, ok) {
+    if (!box) return;
+    box.textContent = text;
+    box.classList.toggle('ok', !!ok);
   }
 
   // ---------- turn ALL saved workouts into compact text ----------
@@ -146,335 +111,207 @@
     return t;
   }
 
-  // ---------- prompts ----------
-  const SYSTEM = [
-    'You are BYD Coach, a friendly, direct strength and bodybuilding coach inside a progressive-overload tracking app.',
-    'Use ONLY the workout data supplied below. Never invent numbers, dates or exercises. All weights are in kg.',
-    'If there is too little data to judge something, say so plainly.',
-    'Progressive overload rules of thumb: if every set reached the top of the rep range at the same weight for 2 sessions in a row, suggest adding weight (about 2.5 kg upper body, 5 kg lower body) or one more rep; if reps or weight dropped, suggest repeating the weight with cleaner effort or a small deload; if a lift has been flat for 3+ sessions, suggest a change (rep range, tempo, extra set).',
-    'Be warm but not cheesy. Short paragraphs and bullets. Give no medical advice; if pain or injury comes up, suggest seeing a professional.'
-  ].join('\n');
+  // ---------- what you can ask ----------
+  const RULES = 'Use ONLY my data. Never invent numbers, dates or exercises. If there is too little data to judge something, say so. Weights are kg. Progressive overload rules of thumb: if every set reached the top of the rep range at the same weight for 2 sessions in a row, suggest adding weight (about 2.5 kg upper body, 5 kg lower body) or one more rep; if reps or weight dropped, suggest repeating the weight or a small deload; if a lift has been flat for 3+ sessions, suggest a change (rep range, tempo, extra set). Be warm but direct, with short paragraphs and bullets. No medical advice.';
 
-  const ASK = {
-    last: 'Write a debrief of my LAST WORKOUT compared with my earlier sessions. Use exactly these markdown headings: "## Overall", "## Compared to before", "## Wins", "## Watch out", "## Next session", "## Keep going". Under "Next session" give a specific target (kg x reps) for each exercise in the last workout. Cite real numbers from the data. Keep it under 350 words.',
-    month: 'Review my last 30 days. Use exactly these markdown headings: "## Consistency" (compare with my weekly goal), "## Progressing", "## Stalling or slipping", "## Plan for the next 2 weeks", "## Keep going". Cite real numbers from the data. Keep it under 350 words.'
-  };
+  const AI_TASKS = [
+    { label: 'Debrief last workout', text: 'Write a debrief of my LAST WORKOUT compared with my earlier sessions. Use exactly these markdown headings: "## Overall", "## Compared to before", "## Wins", "## Watch out", "## Next session", "## Keep going". Under "Next session" give a specific target (kg x reps) for each exercise in the last workout. Cite real numbers from the data. Keep it under 350 words.' },
+    { label: 'Review last 30 days', text: 'Review my last 30 days. Use exactly these markdown headings: "## Consistency" (compare with my weekly goal), "## Progressing", "## Stalling or slipping", "## Plan for the next 2 weeks", "## Keep going". Cite real numbers from the data. Keep it under 350 words.' },
+    { label: 'What should I lift next session?', text: 'What should I lift next session? Give a specific kg x reps target for every exercise of my last workout.' },
+    { label: 'Which exercise is stalling?', text: 'Which of my exercises is stalling or slipping? Cite the numbers and tell me what to change.' },
+    { label: 'Am I training enough?', text: 'Am I training enough compared with my weekly goal? Be honest and give a simple fix if not.' },
+    { label: 'Where am I getting stronger?', text: 'Where am I getting stronger? Cite the numbers.' },
+    { label: 'Give me some motivation', text: 'Give me some motivation based on my real progress. Keep it short and specific.' }
+  ];
+  let aiPick = 0;
 
-  // ---------- talking to Gemini ----------
-  function apiError(status, data) {
-    const msg = data && data.error && data.error.message ? data.error.message : '';
+  // ---------- one-time Supabase setup (read-only link) ----------
+  const SQL_SETUP = `create or replace function public.coach_data(t text)
+returns json
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select coalesce(
+    (select s.value::json
+       from public.byd_sync s
+      where s.key = 'coach'
+        and encode(sha256(convert_to(s.sync_id::text, 'UTF8')), 'hex') = t
+      limit 1),
+    json_build_object('error', 'No data yet. Open the Coach page in the app and tap Copy prompt + link again.')
+  );
+$$;
+
+grant execute on function public.coach_data(text) to anon, authenticated;`;
+
+  // ---------- the page ----------
+  function render() {
+    const chips = AI_TASKS.map((t, i) =>
+      '<button class="chip q' + (i === aiPick ? ' on' : '') + '" data-act="ai-task" data-i="' + i + '">' + esc(t.label) + '</button>').join('');
+    root.innerHTML = `
+      <div class="module">
+        <div class="mod-bar"><span>Connect any AI</span></div>
+        <div class="coach-body">
+          <p>Pick what you want, copy the prompt, and paste it into ChatGPT, Claude, Gemini or any AI chat. The link inside lets the AI read your latest workout data.</p>
+          <div class="chips coach-quick" id="ai-chips">${chips}</div>
+          <input class="input" id="ai-custom" placeholder="Or type your own question" maxlength="400" autocomplete="off" style="width:100%;flex:none;margin-bottom:12px">
+          <div class="coach-actions">
+            <button class="btn primary" data-act="ai-link">Copy prompt + link</button>
+            <button class="btn" data-act="ai-data">Copy prompt + data</button>
+          </div>
+          <div class="coach-actions">
+            <button class="btn small" data-act="ai-open" data-ai="chatgpt">Open ChatGPT</button>
+            <button class="btn small" data-act="ai-open" data-ai="claude">Open Claude</button>
+            <button class="btn small" data-act="ai-open" data-ai="gemini">Open Gemini</button>
+          </div>
+          <div class="coach-note" id="ai-msg"></div>
+          <div id="ai-setup"></div>
+          <p class="coach-fine">The link only works if your AI can open web links. If it says it can't, use "Copy prompt + data" instead. Treat the link as private: anyone who has it can read your workout summary.</p>
+        </div>
+      </div>`;
+  }
+
+  async function sha256Hex(s) {
+    const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(s));
+    return Array.from(new Uint8Array(buf), b => b.toString(16).padStart(2, '0')).join('');
+  }
+
+  // save a fresh summary to the cloud and return the private link to it
+  async function makeLink() {
+    const cfg = window.BYD_CONFIG || {};
+    let code = (cfg.SYNC_CODE || '').trim();
+    if (!code || code.indexOf('PASTE-') !== -1) { try { code = localStorage.getItem('byd_sync_code') || ''; } catch (e) { code = ''; } }
+    if (!cfg.SUPABASE_URL || !cfg.SUPABASE_ANON_KEY || !window.supabase || !code) throw new Error('NOSYNC');
+    const text = digest();
+    if (!text) throw new Error('No saved workouts yet. Finish a workout first.');
+
+    const client = window.supabase.createClient(cfg.SUPABASE_URL, cfg.SUPABASE_ANON_KEY, {
+      global: { headers: { 'x-byd-code': code } },
+      auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false }
+    });
+    const now = new Date().toISOString();
+    const { error } = await client.from('byd_sync').upsert(
+      { sync_id: code, key: 'coach', value: { note: 'Workout summary for my AI coach. Weights are in kg.', updated: now, lines: text.split('\n') }, updated_at: now },
+      { onConflict: 'sync_id,key' }
+    );
+    if (error) throw new Error('Could not save the summary to the cloud: ' + error.message);
+
+    const link = cfg.SUPABASE_URL.replace(/\/$/, '') + '/rest/v1/rpc/coach_data?t=' + await sha256Hex(code) +
+                 '&apikey=' + encodeURIComponent(cfg.SUPABASE_ANON_KEY);
+
+    // make sure the link really works
+    let res, data;
+    try { res = await fetch(link); data = await res.json().catch(() => ({})); }
+    catch (e) { throw new Error('Cannot reach the cloud. Check your internet connection.'); }
+    if (!res.ok) {
+      if (res.status === 404 || (data && data.code === 'PGRST202')) throw new Error('SETUP');
+      throw new Error((data && data.message) || ('The link check failed (' + res.status + ').'));
+    }
+    if (data && data.error) throw new Error('The link works but has no data yet. Try again.');
+    return link;
+  }
+
+  function promptWithLink(link, task) {
+    return 'You are my strength and bodybuilding coach.\nOpen this link and read my workout data (JSON, weights in kg; the last session is my latest workout):\n' + link +
+           '\nIf you cannot open the link, tell me so and stop. Do not guess.\n\nRules: ' + RULES + '\n\nMy request: ' + task;
+  }
+  function promptWithData(data, task) {
+    return 'You are my strength and bodybuilding coach. My workout data is below (weights in kg).\n\nRules: ' + RULES + '\n\nMy request: ' + task + '\n\nMY DATA:\n' + data;
+  }
+  function aiTaskText() {
+    const custom = (el('ai-custom').value || '').trim();
+    return custom || AI_TASKS[aiPick].text;
+  }
+
+  // copy text even when it is produced asynchronously (needed on iPhone Safari)
+  async function copyText(promise) {
     let text;
-    if (status === 400 && /api key/i.test(msg)) text = 'Google rejected this key. Check that you pasted the whole key.';
-    else if (status === 401 || status === 403) text = 'This key is not allowed to use Gemini. Create a new one at aistudio.google.com/apikey.';
-    else if (status === 429) text = 'Free limit reached for now. Wait a minute and try again. Daily limits reset at midnight Pacific time.';
-    else if (status >= 500) text = 'Google\'s AI is busy right now. Try again in a moment.';
-    else text = msg || ('Request failed (' + status + ').');
-    const e = new Error(text);
-    e.status = status;
-    return e;
-  }
-
-  async function call(url, options) {
-    let res;
-    try { res = await fetch(url, options); }
-    catch (e) { throw new Error('Cannot reach Google. Check your internet connection.'); }
-    const data = await res.json().catch(() => ({}));
-    return { res: res, data: data };
-  }
-
-  // newest free Flash model first (stable beats preview, full beats lite)
-  function score(n) {
-    const v = parseFloat((n.match(/gemini-(\d+(?:\.\d+)?)/) || [0, 0])[1]);
-    let s = v * 100;
-    if (/lite/.test(n)) s -= 30;
-    if (/preview|exp/.test(n)) s -= 120;
-    return s;
-  }
-  async function listModels(key) {
-    const { res, data } = await call(API + '/models?pageSize=200', { headers: { 'x-goog-api-key': key } });
-    if (!res.ok) throw apiError(res.status, data);
-    const names = (data.models || [])
-      .filter(m => (m.supportedGenerationMethods || []).includes('generateContent'))
-      .map(m => String(m.name).replace(/^models\//, ''))
-      .filter(n => /^gemini-.*flash/.test(n) && !/(image|tts|audio|live|native|robotics|embedding|computer|omni|learnlm|thinking-exp)/.test(n));
-    names.sort((a, b) => score(b) - score(a) || a.length - b.length);
-    return names;
-  }
-  async function pickModel(key) {
-    const names = await listModels(key);
-    if (!names.length) throw new Error('No free Gemini model was found for this key.');
-    models = names;
-    store.set(K.model, names[0]);
-    return names[0];
-  }
-
-  async function gemini(system, contents) {
-    const key = store.get(K.key);
-    if (!key) throw new Error('Connect your key first.');
-    let model = store.get(K.model) || await pickModel(key);
-
-    const body = JSON.stringify({
-      systemInstruction: { parts: [{ text: system }] },
-      contents: contents,
-      generationConfig: { maxOutputTokens: 4096 }
-    });
-    const send = () => call(API + '/models/' + model + ':generateContent', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key },
-      body: body
-    });
-
-    let r = await send();
-    if (r.res.status === 404) {                         // model was retired: find a current one and retry
-      store.del(K.model);
-      model = await pickModel(key);
-      r = await send();
-    }
-    if (r.res.status >= 500) {                          // busy: one more try
-      await new Promise(ok => setTimeout(ok, 1500));
-      r = await send();
-    }
-    if (!r.res.ok) throw apiError(r.res.status, r.data);
-
-    const cand = r.data.candidates && r.data.candidates[0];
-    const parts = (cand && cand.content && cand.content.parts) || [];
-    const text = parts.filter(p => !p.thought).map(p => p.text || '').join('').trim();
-    if (!text) {
-      const why = r.data.promptFeedback && r.data.promptFeedback.blockReason;
-      throw new Error(why ? 'Google blocked this answer (' + why + ').' : 'The AI sent an empty answer. Try again.');
+    const blob = promise.then(t => { text = t; return new Blob([t], { type: 'text/plain' }); });
+    blob.catch(() => {});                                      // the caller reports the error
+    try {
+      if (window.ClipboardItem && navigator.clipboard && navigator.clipboard.write) {
+        await navigator.clipboard.write([new ClipboardItem({ 'text/plain': blob })]);
+        return text;
+      }
+    } catch (e) { /* fall through to the older way */ }
+    text = await promise;
+    try { await navigator.clipboard.writeText(text); }
+    catch (e) {
+      el('ai-setup').innerHTML = '<div class="coach-note ok">Copy this by hand:</div><textarea class="input" readonly rows="6" style="width:100%;margin-top:8px">' + esc(text) + '</textarea>';
     }
     return text;
   }
 
-  // ---------- screens ----------
-  function note(box, text, ok) {
-    if (!box) return;
-    box.textContent = text;
-    box.classList.toggle('ok', !!ok);
-  }
-  function setBusy(v) { busy = v; root.classList.toggle('busy', v); }
-  const typingHTML = label => '<div class="typing-line"><span>' + esc(label) + '</span><i></i><i></i><i></i></div>';
-
-  function setupHTML() {
-    return `
-      <div class="module">
-        <div class="mod-bar"><span>Connect your free AI</span></div>
-        <div class="coach-body">
-          <p>Your coach runs on Google's free Gemini AI. It reads all your saved workouts, compares them with your past sessions, and answers any question.</p>
-          <ol class="coach-steps">
-            <li>Open <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">aistudio.google.com/apikey</a> and sign in with Google.</li>
-            <li>Tap <b>Create API key</b> and copy it.</li>
-            <li>Paste it below. It is saved only on this device.</li>
-          </ol>
-          <div class="row">
-            <input class="input" id="coach-key" type="password" placeholder="Paste your API key" autocomplete="off" spellcheck="false">
-            <button class="btn primary" data-act="connect">Connect</button>
-          </div>
-          <div class="coach-note" id="coach-msg"></div>
-          <p class="coach-fine">Privacy: when you ask, a text summary of your workouts is sent to Google. On the free tier Google may use it to improve its products. Do this on each device you want to use.</p>
-        </div>
-      </div>`;
+  function showSetup() {
+    note(el('ai-msg'), 'The link needs a one-time setup in Supabase (about a minute).', false);
+    el('ai-setup').innerHTML = `
+      <ol class="coach-steps" style="margin-top:12px">
+        <li>Open your Supabase project, then <b>SQL Editor</b> and <b>New query</b>.</li>
+        <li>Paste the code below and press <b>Run</b>.</li>
+        <li>Come back here and tap <b>Copy prompt + link</b> again.</li>
+      </ol>
+      <pre class="sql">${esc(SQL_SETUP)}</pre>
+      <button class="btn small" data-act="ai-copysql">Copy code</button>`;
   }
 
-  const QUICK = [
-    'What should I lift next session?',
-    'Which exercise is stalling?',
-    'Am I training enough?',
-    'Where am I getting stronger?',
-    'Give me some motivation'
-  ];
-
-  function render() {
-    const key = store.get(K.key);
-    renderedWithKey = !!key;
-    if (!key) { root.innerHTML = setupHTML(); return; }
-
-    const model = store.get(K.model);
-    const list = models.slice();
-    if (model && !list.includes(model)) list.unshift(model);
-
-    root.innerHTML = `
-      <div class="module">
-        <div class="mod-bar"><span>Workout debrief</span><span class="mod-count" id="coach-rep-when"></span></div>
-        <div class="coach-body">
-          <div class="coach-actions">
-            <button class="btn primary" data-act="rep-last">Debrief last workout</button>
-            <button class="btn" data-act="rep-month">Review last 30 days</button>
-          </div>
-          <div class="md" id="coach-report"></div>
-        </div>
-      </div>
-
-      <div class="module">
-        <div class="mod-bar"><span>Ask your coach</span><button class="btn small ghost" data-act="clear">Clear</button></div>
-        <div class="coach-body">
-          <div class="chat" id="coach-chat"></div>
-          <div class="chips coach-quick">${QUICK.map(q => '<button class="chip q" data-act="quick" data-q="' + esc(q) + '">' + esc(q) + '</button>').join('')}</div>
-          <div class="row">
-            <input class="input" id="coach-q" placeholder="Ask anything about your training" maxlength="500" autocomplete="off">
-            <button class="btn primary" data-act="send">Send</button>
-          </div>
-        </div>
-      </div>
-
-      <div class="module">
-        <div class="mod-bar"><span>Settings</span></div>
-        <div class="coach-body">
-          <div class="micro" style="margin-bottom:8px">AI model (free)</div>
-          <select class="input" id="coach-model">${list.map(m => '<option value="' + esc(m) + '"' + (m === model ? ' selected' : '') + '>' + esc(m) + '</option>').join('')}</select>
-          <div class="coach-actions" style="margin:12px 0 0">
-            <button class="btn small" data-act="refresh-models">Find free models</button>
-            <button class="btn small danger" data-act="disconnect">Remove key</button>
-          </div>
-          <div class="coach-note" id="coach-set-msg"></div>
-        </div>
-      </div>`;
-
-    const rep = readJSON(K.report, null);
-    if (rep && rep.text) showReport(rep);
-    else el('coach-report').innerHTML = '<p>Tap a button above and your coach will read your saved workouts and write you a report.</p>';
-    drawChat();
-  }
-
-  function showReport(rep) {
-    el('coach-report').innerHTML = md(rep.text);
-    el('coach-rep-when').textContent = (rep.kind === 'month' ? '30 days' : 'Last workout') + ' · ' +
-      new Date(rep.ts).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
-  }
-
-  function msgHTML(m) {
-    return m.role === 'user'
-      ? '<div class="msg me">' + esc(m.text).replace(/\n/g, '<br>') + '</div>'
-      : '<div class="msg ai"><div class="md">' + md(m.text) + '</div></div>';
-  }
-  function drawChat() {
-    const box = el('coach-chat');
-    if (!box) return;
-    box.innerHTML = chat.length
-      ? chat.map(msgHTML).join('')
-      : '<div class="chat-empty">Ask about your lifts, plateaus, recovery or what to do next. Your coach reads all your saved data every time.</div>';
-    if (chatErr) box.innerHTML += '<div class="coach-note">' + esc(chatErr) + '</div>';
-    box.scrollTop = box.scrollHeight;
-  }
-
-  // ---------- actions ----------
-  async function connect() {
-    const msg = el('coach-msg');
-    const key = (el('coach-key').value || '').trim();
-    if (key.length < 20) { note(msg, 'That looks too short. Paste the whole key.'); return; }
-    note(msg, 'Checking your key…', true);
-    setBusy(true);
-    try {
-      await pickModel(key);
-      store.set(K.key, key);
-      render();
-    } catch (err) {
-      note(msg, err.message);
-    }
-    setBusy(false);
-  }
-
-  async function runReport(kind) {
-    if (busy) return;
-    const box = el('coach-report');
+  async function aiCopy(mode, keepSetup) {
+    const msg = el('ai-msg');
+    if (!keepSetup) el('ai-setup').innerHTML = '';
     const d = digest();
-    if (!d) { box.innerHTML = '<p>No saved workouts yet. Finish a workout first, then come back.</p>'; return; }
-    setBusy(true);
-    box.innerHTML = typingHTML('Reading your data');
+    if (!d) { note(msg, 'No saved workouts yet. Finish a workout first.'); return null; }
+    const task = aiTaskText();
+    note(msg, mode === 'link' ? 'Preparing your link…' : 'Copying…', true);
     try {
-      const text = await gemini(SYSTEM + '\n\nMY DATA:\n' + d, [{ role: 'user', parts: [{ text: ASK[kind] }] }]);
-      const rep = { kind: kind, text: text, ts: Date.now() };
-      store.set(K.report, JSON.stringify(rep));
-      showReport(rep);
+      const text = await copyText((async () => {
+        if (mode === 'data') return promptWithData(d, task);
+        return promptWithLink(await makeLink(), task);
+      })());
+      note(msg, mode === 'link' ? 'Copied. Paste it into any AI chat.' : 'Copied, with your data inside. Paste it into any AI chat.', true);
+      return text;
     } catch (err) {
-      box.innerHTML = '<div class="coach-note">' + esc(err.message) + '</div>';
+      if (err.message === 'SETUP') showSetup();
+      else if (err.message === 'NOSYNC') note(msg, 'Cloud sync is not set up here. Use "Copy prompt + data" instead.');
+      else note(msg, err.message);
+      return null;
     }
-    setBusy(false);
   }
 
-  async function ask(textArg) {
-    if (busy) return;
-    const input = el('coach-q');
-    const q = String(textArg || input.value || '').trim();
-    if (!q) return;
-    input.value = '';
-    chatErr = '';
-    chat.push({ role: 'user', text: q });
-    drawChat();
-    el('coach-chat').insertAdjacentHTML('beforeend', '<div class="msg ai">' + typingHTML('Thinking') + '</div>');
-    el('coach-chat').scrollTop = el('coach-chat').scrollHeight;
-    setBusy(true);
-
-    try {
-      const d = digest();
-      const system = SYSTEM + '\nAnswer the question directly in under 200 words unless I ask for more detail. You can see all my saved data below.\n\nMY DATA:\n' + (d || 'No workouts saved yet.');
-      const contents = chat.slice(-12).map(m => ({ role: m.role === 'user' ? 'user' : 'model', parts: [{ text: m.text }] }));
-      while (contents.length && contents[0].role === 'model') contents.shift();
-      const text = await gemini(system, contents);
-      chat.push({ role: 'ai', text: text });
-    } catch (err) {
-      chat.pop();                               // keep the chat alternating
-      input.value = q;
-      chatErr = err.message;
-    }
-    chat = chat.slice(-30);
-    store.set(K.chat, JSON.stringify(chat));
-    setBusy(false);
-    drawChat();
+  async function aiOpen(which) {
+    const w = window.open('about:blank', '_blank');            // open straight away so the browser allows it
+    let text = await aiCopy('link', true);
+    if (!text) text = await aiCopy('data', true);              // link not ready: fall back to the data prompt
+    const bases = {
+      chatgpt: ['https://chatgpt.com/?q=', 'https://chatgpt.com/'],
+      claude: ['https://claude.ai/new?q=', 'https://claude.ai/new'],
+      gemini: ['https://gemini.google.com/app', 'https://gemini.google.com/app']
+    };
+    const b = bases[which];
+    const url = text && which !== 'gemini' && text.length < 6000 ? b[0] + encodeURIComponent(text) : b[1];
+    if (w) w.location.href = url;
+    else note(el('ai-msg'), 'Copied. Open your AI app and paste.', true);
   }
 
-  async function refreshModels() {
-    const msg = el('coach-set-msg');
-    note(msg, 'Looking for free models…', true);
-    setBusy(true);
-    try {
-      const names = await listModels(store.get(K.key));
-      if (!names.length) throw new Error('No free Gemini model was found for this key.');
-      models = names;
-      if (!names.includes(store.get(K.model))) store.set(K.model, names[0]);
-      render();
-      note(el('coach-set-msg'), names.length + ' model' + (names.length === 1 ? '' : 's') + ' found.', true);
-    } catch (err) {
-      note(msg, err.message);
-    }
-    setBusy(false);
-  }
-
+  // ---------- clicks ----------
   root.addEventListener('click', e => {
     const b = e.target.closest('[data-act]');
     if (!b) return;
     switch (b.dataset.act) {
-      case 'connect': connect(); break;
-      case 'rep-last': runReport('last'); break;
-      case 'rep-month': runReport('month'); break;
-      case 'send': ask(); break;
-      case 'quick': ask(b.dataset.q); break;
-      case 'refresh-models': refreshModels(); break;
-      case 'clear':
-        chat = []; chatErr = ''; store.del(K.chat); drawChat();
+      case 'ai-task':
+        aiPick = Number(b.dataset.i);
+        el('ai-chips').querySelectorAll('.chip').forEach((c, i) => c.classList.toggle('on', i === aiPick));
+        el('ai-custom').value = '';
         break;
-      case 'disconnect':
-        if (confirm('Remove your key from this device?')) {
-          store.del(K.key); store.del(K.model); models = [];
-          render();
-        }
+      case 'ai-link': aiCopy('link'); break;
+      case 'ai-data': aiCopy('data'); break;
+      case 'ai-open': aiOpen(b.dataset.ai); break;
+      case 'ai-copysql':
+        navigator.clipboard.writeText(SQL_SETUP)
+          .then(() => note(el('ai-msg'), 'Code copied. Paste it into the Supabase SQL Editor.', true))
+          .catch(() => {});
         break;
     }
   });
-  root.addEventListener('keydown', e => {
-    if (e.key !== 'Enter') return;
-    if (e.target.id === 'coach-q') { e.preventDefault(); ask(); }
-    if (e.target.id === 'coach-key') { e.preventDefault(); connect(); }
-  });
-  root.addEventListener('change', e => {
-    if (e.target.id === 'coach-model') store.set(K.model, e.target.value);
-  });
 
-  // open the tab: only redraw if the key state changed (so typing is never wiped by a background sync)
-  document.addEventListener('pagechange', e => {
-    if (e.detail === 'coach' && !busy && renderedWithKey !== !!store.get(K.key)) render();
-  });
-
-  window.Coach = { digest: digest, md: md };
   render();
 })();
