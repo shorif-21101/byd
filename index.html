@@ -56,6 +56,12 @@
         <span class="lbl">Activity</span>
       </button>
 
+      <button class="nav-btn" data-page="coach">
+        <span class="led"></span>
+        <svg class="nav-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"/><path d="M20 3v4"/><path d="M22 5h-4"/><path d="M4 17v2"/><path d="M5 18H3"/></svg>
+        <span class="lbl">Coach</span>
+      </button>
+
       <!-- NEW PAGE BUTTONS GO HERE LATER -->
 
       <div class="grille"></div>
@@ -77,7 +83,7 @@
         <!-- PAGE 1: WORKOUT -->
         <section class="page active" id="page-workout">
           <div class="module display">
-            <div class="mod-bar"><span>Today's session</span><span class="mod-count"><i class="led-a"></i>01 / 05</span></div>
+            <div class="mod-bar"><span>Today's session</span><span class="mod-count"><i class="led-a"></i>01 / 06</span></div>
             <div class="lcd">
               <div class="lcd-status"><i class="led-g"></i>Session live</div>
               <h1>Workout</h1>
@@ -90,7 +96,7 @@
         <!-- PAGE 2: PRESETS -->
         <section class="page" id="page-presets">
           <div class="module display">
-            <div class="mod-bar"><span>Build your days</span><span class="mod-count"><i class="led-a"></i>02 / 05</span></div>
+            <div class="mod-bar"><span>Build your days</span><span class="mod-count"><i class="led-a"></i>02 / 06</span></div>
             <div class="lcd">
               <div class="lcd-status"><i class="led-g"></i>Library</div>
               <h1>Presets</h1>
@@ -109,7 +115,7 @@
         <!-- PAGE 3: PROGRESS -->
         <section class="page" id="page-progress">
           <div class="module display">
-            <div class="mod-bar"><span>Overload tracker</span><span class="mod-count"><i class="led-a"></i>03 / 05</span></div>
+            <div class="mod-bar"><span>Overload tracker</span><span class="mod-count"><i class="led-a"></i>03 / 06</span></div>
             <div class="lcd">
               <div class="lcd-status"><i class="led-g"></i>Analysis</div>
               <h1>Progress</h1>
@@ -122,7 +128,7 @@
         <!-- PAGE 4: DATA LOG -->
         <section class="page" id="page-datalog">
           <div class="module display">
-            <div class="mod-bar"><span>Saved sessions</span><span class="mod-count"><i class="led-a"></i>04 / 05</span></div>
+            <div class="mod-bar"><span>Saved sessions</span><span class="mod-count"><i class="led-a"></i>04 / 06</span></div>
             <div class="lcd">
               <div class="lcd-status"><i class="led-g"></i>Archive</div>
               <h1>Data Log</h1>
@@ -135,7 +141,7 @@
         <!-- PAGE 5: ACTIVITY -->
         <section class="page" id="page-activity">
           <div class="module display">
-            <div class="mod-bar"><span>Gym calendar</span><span class="mod-count"><i class="led-a"></i>05 / 05</span></div>
+            <div class="mod-bar"><span>Gym calendar</span><span class="mod-count"><i class="led-a"></i>05 / 06</span></div>
             <div class="lcd">
               <div class="lcd-status"><i class="led-g"></i>Calendar</div>
               <h1>Activity</h1>
@@ -143,6 +149,19 @@
             </div>
           </div>
           <div id="activity-root"></div>
+        </section>
+
+        <!-- PAGE 6: AI COACH -->
+        <section class="page" id="page-coach">
+          <div class="module display">
+            <div class="mod-bar"><span>Insight and advice</span><span class="mod-count"><i class="led-a"></i>06 / 06</span></div>
+            <div class="lcd">
+              <div class="lcd-status"><i class="led-g"></i>AI online</div>
+              <h1>Coach</h1>
+              <div class="lcd-sub lcd-date"></div>
+            </div>
+          </div>
+          <div id="coach-root"></div>
         </section>
 
         <!-- NEW PAGES GO HERE LATER -->
@@ -160,6 +179,7 @@
   <script src="js/pages/progress.js"></script>
   <script src="js/pages/datalog.js"></script>
   <script src="js/pages/activity.js"></script>
+  <script src="js/pages/coach.js"></script>
   <script src="js/app.js"></script>
   <script src="js/sync.js"></script>
 
