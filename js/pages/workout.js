@@ -4,6 +4,7 @@
 //   "history" = [ { date, exId, exName, preset, sets: [ {reps, kg} ] } ]   (used by Progress, Data Log, Activity)
 // One day = one preset group (e.g. Day 1 : Chest & Tricep).
 // Tapping an exercise opens a centred pop-up with its sets.
+console.log('workout.js v2 loaded');
 
 (function () {
   const root = document.getElementById('workout-root');
@@ -271,14 +272,13 @@
     sfx('open');
   }
    function closeEx() { flushSave(); openEx = null; renderExModal(); }
-
   // an exercise just became finished
+  // The workout only ends when you press "Finish Workout".
+    // an exercise just became finished.
+  // Nothing closes automatically: you close the pop-up yourself,
+  // and the workout only ends when you press "Finish Workout".
   function afterComplete(id) {
-    const ex = currentExercises();
-    const everyDone = ex.length && ex.every(e => state.exDone[e.id]);
-    if (everyDone) { closeEx(); checkAllDone(); return; }          // the big finish sound takes over
     sfx('exdone');
-    setTimeout(() => { if (openEx === id && state.exDone[id]) closeEx(); }, 800);
   }
 
   // ----- FINISHED SCREEN -----
@@ -405,14 +405,7 @@
     save();
   }
 
-  // ----- FINISH WORKOUT -----
-  function checkAllDone() {
-    const ex = currentExercises();
-    if (ex.length && ex.every(e => state.exDone[e.id]) && !finishing) {
-      finishing = true;
-      setTimeout(() => finish(true), 700);
-    }
-  }
+ 
 
   function playVanish(done) {
     const items = root.querySelectorAll('.channel, .pick, .progress, .list-label, .hint, .ex-card, .finish');

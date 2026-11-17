@@ -417,7 +417,7 @@ h1 {
 .segs i.on { background: var(--amber); box-shadow: 0 0 9px rgba(var(--amber-rgb), 0.65); }
 
 /* ----- exercise rows ----- */
-.wk-list { display: flex; flex-direction: column; gap: 10px; counter-reset: ex; }
+.wk-list { display: flex; flex-direction: column; gap: 10px; counter-reset: ex; position: relative; }
 .ex-card {
   counter-increment: ex;
   background: linear-gradient(180deg, var(--mod-top), var(--mod-bot));
